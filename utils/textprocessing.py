@@ -20,7 +20,7 @@ class TextProcessing:
     then, this data transformed to a dataframe and saved to a CSV file
     The idea is to use this class in the pipeline to feature extration process"""
 
-    def __init__(self, lenguage: str):
+    def __init__(self, language: str):
         """This class is used to process the text
         Class parameters:
             lenguage (str): Language of the text to process
@@ -29,13 +29,13 @@ class TextProcessing:
         self.logger = logging.getLogger(__name__)
 
         nltk.download("averaged_perceptron_tagger")
-        self.lenguage = lenguage
-        self.stop_words = set(stopwords.words(self.lenguage))
-        self.stemmer = SnowballStemmer(self.lenguage)
+        self.language = language
+        self.stop_words = set(stopwords.words(self.language))
+        self.stemmer = SnowballStemmer(self.language)
 
     def tokenize(self, text: str):
         """This method is used to tokenize the text"""
-        tokens = word_tokenize(text.lower(), language=self.lenguage)
+        tokens = word_tokenize(text.lower(), language=self.language)
         return tokens
 
     def remove_stopwords(self, tokens: list):
@@ -149,5 +149,5 @@ class TextProcessing:
 
 # TODO: ejecutar método run en clase de orchestrator
 if __name__ == "__main__":
-    text_processing = TextProcessing(lenguage="spanish")
+    text_processing = TextProcessing(language="english")
     text_processing.run(file_name="tickets_classification_eng", version="1")
