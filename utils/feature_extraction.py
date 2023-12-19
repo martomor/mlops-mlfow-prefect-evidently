@@ -7,7 +7,9 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
+
 warnings.filterwarnings("ignore")
+
 
 class FeatureExtraction:
     def __init__(self) -> None:
@@ -16,13 +18,24 @@ class FeatureExtraction:
         self.logger = logging.getLogger(__name__)
 
     def read_csv(self, path: str, file_name: str) -> pd.DataFrame:
-        """Reads the CSV file and returns a DataFrame."""
+        """Reads the CSV file and returns a DataFrame
+        Args:
+            path (str): Path to the CSV file
+            file_name (str): Name of the CSV file
+        Returns:
+            pd.DataFrame: DataFrame with the data from the CSV file
+        """
         file_path = os.path.join(path, file_name)
         df = pd.read_csv(file_path)
         return df
 
     def fit(self, df: pd.DataFrame) -> None:
-        """Fits the TF-IDF vectorizer for a Document-Term Matrix."""
+        """Fits the TF-IDF vectorizer for a Document-Term Matrix
+        Args:
+            df (pd.DataFrame): DataFrame with the data to fit the vectorizer
+        Returns:
+            None"""
+
         # be sure not use NaN values
         self.df = df
         self.df = self.df.dropna(subset=["processed_text"])
@@ -67,30 +80,46 @@ class FeatureExtraction:
         return self.df
 
     def topic_mapping(self, df: pd.DataFrame) -> pd.DataFrame:
-        """This method is used to map the topics with the tickets"""
+        """This method is used to map the topics with the ticket
+        Args:
+            df (pd.DataFrame): Dataframe with the topics and the tickets
+        Returns:
+            pd.DataFrame: Dataframe with the topics and the tickets
+        """
         self.dict_mapping = {
             0: "Bank Account Services",
             1: "Credit Report or Prepaid Card",
             2: "Mortgage/Loan",
         }
         df["relevant_topics"] = df["relevant_topics"].map(self.dict_mapping)
-        return  self.dict_mapping# df, self.dict_mapping
+        return self.dict_mapping  # df, self.dict_mapping
 
     def save_topic_mapping_to_json(self, dictionary: dict, path: str, file_name: str):
-        """This method saves the dictionary to a JSON file"""
+        """This method saves the dictionary to a JSON file
+        Args:
+            dictionary (dict): Dictionary to save
+            path (str): Path to the JSON file
+            file_name (str): Name of the JSON file
+        Returns:
+            None"""
         file_path = os.path.join(path, file_name)
         with open(file_path, "w") as file:
             json.dump(dictionary, file, ensure_ascii=False)
         self.logger.info(f"Dictionary successfully saved to {file_path}")
 
     def save_df_to_csv(self, df: pd.DataFrame, path: str, file_name: str):
-        """This method saves the dataframe to a CSV file"""
+        """This method saves the dataframe to a CSV file
+        Args:
+            df (pd.DataFrame): Dataframe to save
+            path (str): Path to the CSV file
+            file_name (str): Name of the CSV file
+        Returns:
+            None"""
         file_path = os.path.join(path, file_name)
         df.to_csv(file_path, index=False)
         self.logger.info(f"Dataframe successfully saved to {file_path}")
 
-
-    def run(self, data_path_processed: str, data_version: int): 
+    def run(self, data_path_processed: str, data_version: int):
         df_tickets = self.read_csv(
             path=data_path_processed,
             file_name=f"tickets_classification_eng_{data_version}.csv",
@@ -106,7 +135,10 @@ class FeatureExtraction:
             path=data_path_processed,
             file_name=f"topic_mapping_{data_version}.json",
         )
-        self.save_df_to_csv(df_tickets, data_path_processed, f"tickets_inputs_eng_{data_version}.csv")
+        self.save_df_to_csv(
+            df_tickets, data_path_processed, f"tickets_inputs_eng_{data_version}.csv"
+        )
+
 
 # TODO: ejecutar run en clase de orquestación
 if __name__ == "__main__":
@@ -114,4 +146,3 @@ if __name__ == "__main__":
     data_path_processed = "tracking/data/data_processed"
     data_version = 1
     feature_extractor_processor.run(data_path_processed, data_version)
-
