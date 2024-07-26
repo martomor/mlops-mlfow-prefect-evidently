@@ -9,3 +9,6 @@ tracking/mlflow.db
 backend.db
 tracking/credentials_aws.py
 orchestration/__pycache__
+.env
+*.pem
+mlops_accessKeys.csv

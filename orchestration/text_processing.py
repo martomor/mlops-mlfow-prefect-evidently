@@ -1,15 +1,16 @@
+import datetime
 import json
+import logging
 import os
-import pandas as pd
-import numpy as np
-from nltk.tokenize import word_tokenize
+import warnings
+
 import nltk
+import numpy as np
+import pandas as pd
+from nltk import pos_tag
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
-from nltk import pos_tag
-import logging
-import warnings
-import datetime
+from nltk.tokenize import word_tokenize
 
 warnings.filterwarnings("ignore")
 
@@ -104,9 +105,7 @@ class TextProcessing:
                 "_source.sub_product": "sub_product",
             }
         )
-        df["ticket_classification"] = (
-            df["category"] + " + " + df["sub_product"]
-        )
+        df["ticket_classification"] = df["category"] + " + " + df["sub_product"]
         df = df.drop(["sub_product", "category"], axis=1)
         df["complaint_what_happened"] = df["complaint_what_happened"].replace(
             "", np.nan
@@ -116,12 +115,11 @@ class TextProcessing:
         self.logger.info("Data successfully transformed")
         return df
 
-
     def run(self, file_name: str, version: int):
         """Runs the entire text processing pipeline."""
         name_data_input = f"{file_name}"
-        PATH_DATA_RAW = "/Users/mdurango/Proyect/Mlops-platzi/orchestration/data/data_raw"
-        PATH_DATA_PROCESSED = "/Users/mdurango/Proyect/Mlops-platzi/orchestration/data/data_processed"
+        PATH_DATA_RAW = "/Users/martinmoreno/Documents/proyects/mlops-mlfow-prefect-evidently/orchestration/data/data_raw"
+        PATH_DATA_PROCESSED = "/Users/martinmoreno/Documents/proyects/mlops-mlfow-prefect-evidently/orchestration/data/data_processed"
         # reading JSON data
         data_tickets = self.read_json(
             path=PATH_DATA_RAW, file_name=f"{name_data_input}.json"
@@ -148,5 +146,3 @@ class TextProcessing:
             file_name=f"{file_name}_{version}.csv",
         )
         self.logger.info(f"Data successfully saved to {PATH_DATA_PROCESSED}")
-
-

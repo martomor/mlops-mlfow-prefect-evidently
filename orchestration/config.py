@@ -1,7 +1,7 @@
 """This config module contains the configuration for the pipeline with prefect"""
 
 # path with data processed
-DATA_PATH_PROCESSED = "/Users/mdurango/Proyect/Mlops-platzi/orchestration/data/data_processed"
+DATA_PATH_PROCESSED = "/Users/martinmoreno/Documents/proyects/mlops-mlfow-prefect-evidently/orchestration/data/data_processed"
 # version of the data
 VERSION = 2
 # language for the input parameter for the text processing class
@@ -20,8 +20,12 @@ PARAMETERS_MODEL = {
     "tol": 0.0001,
 }
 
-idx2label = {"0": "Bank Account Services", "1": "Credit Report or Prepaid Card", "2": "Mortgage/Loan"}
+idx2label = {
+    "0": "Bank Account Services",
+    "1": "Credit Report or Prepaid Card",
+    "2": "Mortgage/Loan",
+}
 label2idx = {v: k for k, v in idx2label.items()}
 # tags for mlflow tracking
-DEVELOPER_NAME = "Maria"
+DEVELOPER_NAME = "Martin"
 MODEL_NAME = "LogisticRegression"

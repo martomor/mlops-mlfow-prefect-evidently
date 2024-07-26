@@ -1,8 +1,9 @@
-from prefect import task, flow
 from datetime import timedelta
+
+from prefect import flow, task
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
 
 @task(

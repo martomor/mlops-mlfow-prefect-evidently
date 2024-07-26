@@ -2,32 +2,33 @@
 import os
 import warnings
 
+import mlflow
+
 # Third party imports
 import numpy as np
 import pandas as pd
-import mlflow
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, classification_report,
-                             precision_recall_fscore_support, 
-                             precision_score, recall_score, roc_auc_score)
-from sklearn.model_selection import train_test_split
-from prefect import flow, task
 
 # Local application imports
 from config import *
-from utils import * 
 from feature_extraction import FeatureExtraction
+from prefect import flow, task
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    precision_recall_fscore_support,
+    roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
 from text_processing import TextProcessing
 
-
+from utils import decode_labels_into_idx, save_pickle
 
 warnings.filterwarnings("ignore")
 
 
-@task(retries=3, retry_delay_seconds=2,
-      name="Text processing task", 
-      tags=["pos_tag"])
+@task(retries=3, retry_delay_seconds=2, name="Text processing task", tags=["pos_tag"])
 def text_processing_task(language: str, file_name: str, version: int):
     """This task is used to run the text processing process
     Args:
@@ -39,11 +40,14 @@ def text_processing_task(language: str, file_name: str, version: int):
     text_processing_processor = TextProcessing(language=language)
     text_processing_processor.run(file_name=file_name, version=version)
 
-@task(retries=3, retry_delay_seconds=2,
-      name="Feature extraction task", 
-      tags=["feature_extraction", "topic_modeling"])
-def feature_extraction_task(data_path_processed: str, 
-                            data_version: int):
+
+@task(
+    retries=3,
+    retry_delay_seconds=2,
+    name="Feature extraction task",
+    tags=["feature_extraction", "topic_modeling"],
+)
+def feature_extraction_task(data_path_processed: str, data_version: int):
     """This task is used to run the feature extraction process
     Args:
         data_path_processed (str): path where the data is stored
@@ -51,20 +55,27 @@ def feature_extraction_task(data_path_processed: str,
     Returns:
         None"""
     feature_extraction_processor = FeatureExtraction()
-    feature_extraction_processor.run(data_path_processed=data_path_processed, 
-                                     data_version = VERSION)
+    feature_extraction_processor.run(
+        data_path_processed=data_path_processed, data_version=VERSION
+    )
 
-@task(retries=3, retry_delay_seconds=2,
-      name="Data transformation task", 
-      tags=["data_transform", "split_data", "train_test_split"])    
-def data_transformation_task_and_split(data_input_path: str, file_name: str, version: int):
+
+@task(
+    retries=3,
+    retry_delay_seconds=2,
+    name="Data transformation task",
+    tags=["data_transform", "split_data", "train_test_split"],
+)
+def data_transformation_task_and_split(
+    data_input_path: str, file_name: str, version: int
+):
     """This function transform the data into X and y
     Args:
       df (pd.DataFrame): dataframe with the data
     Returns:
       X (pd.Series): series with the text
       y (pd.Series): series with the labels"""
-    
+
     # read data
     df = pd.read_csv(os.path.join(data_input_path, f"{file_name}{version}.csv"))
     X = df["processed_text"]
@@ -82,6 +93,7 @@ def data_transformation_task_and_split(data_input_path: str, file_name: str, ver
     )
     print("Data transformation and split task successfully completed")
     return X_train, X_test, y_train, y_test, count_vectorizer
+
 
 @task(
     retries=3,
@@ -124,11 +136,11 @@ def training_best_model(
         y_train_pred = model.predict(X_train)
         y_test_pred = model.predict(X_test)
 
-        precision_train, recall_train, fscore_train, support_train = precision_recall_fscore_support(
-            y_train, y_train_pred, average="weighted"
+        precision_train, recall_train, fscore_train, support_train = (
+            precision_recall_fscore_support(y_train, y_train_pred, average="weighted")
         )
-        precision_test, recall_test, fscore_test, support_test = precision_recall_fscore_support(
-            y_test, y_test_pred, average="weighted"
+        precision_test, recall_test, fscore_test, support_test = (
+            precision_recall_fscore_support(y_test, y_test_pred, average="weighted")
         )
 
         mlflow.log_metrics(
@@ -170,27 +182,35 @@ def training_best_model(
 
 @flow
 def main_flow():
-    text_processing_task(language = LANGUAGE, file_name = FILE_NAME_DATA_INPUT, version = VERSION)
-    feature_extraction_task(data_path_processed = DATA_PATH_PROCESSED,
-                            data_version = VERSION)
-    X_train, X_test, y_train, y_test, count_vectorizer = data_transformation_task_and_split(
-        data_input_path=DATA_PATH_PROCESSED,
-        file_name="tickets_inputs_eng_",
-        version=VERSION
+    text_processing_task(
+        language=LANGUAGE, file_name=FILE_NAME_DATA_INPUT, version=VERSION
+    )
+    feature_extraction_task(
+        data_path_processed=DATA_PATH_PROCESSED, data_version=VERSION
+    )
+    X_train, X_test, y_train, y_test, count_vectorizer = (
+        data_transformation_task_and_split(
+            data_input_path=DATA_PATH_PROCESSED,
+            file_name="tickets_inputs_eng_",
+            version=VERSION,
+        )
     )
     save_pickle((X_train, y_train), "train")
-    save_pickle((X_test, y_test),  "test")
+    save_pickle((X_test, y_test), "test")
     save_pickle(count_vectorizer, "count_vectorizer")
-    print("Data transformation and split task successfully completed and stored in pickle files")
+    print(
+        "Data transformation and split task successfully completed and stored in pickle files"
+    )
 
-    metrics_classification = training_best_model(X_train = X_train, 
-                                                y_train = y_train,
-                                                X_test = X_test,
-                                                y_test = y_test,
-                                                params = PARAMETERS_MODEL,
-                                                model_name = MODEL_NAME)
+    metrics_classification = training_best_model(
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        params=PARAMETERS_MODEL,
+        model_name=MODEL_NAME,
+    )
     print(metrics_classification)
 
 
 main_flow()
-

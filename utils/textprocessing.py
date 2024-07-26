@@ -1,15 +1,21 @@
 import json
 import os
-import pandas as pd
-import numpy as np
-from nltk.tokenize import word_tokenize
+
 import nltk
-from nltk.corpus import stopwords
-from nltk.stem import SnowballStemmer
-from nltk import pos_tag
+import numpy as np
+import pandas as pd
+from nltk.tokenize import word_tokenize
+
+nltk.download("stopwords")
+nltk.download("punkt")
+
+import datetime
 import logging
 import warnings
-import datetime
+
+from nltk import pos_tag
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 
 warnings.filterwarnings("ignore")
 
@@ -29,7 +35,7 @@ class TextProcessing:
         self.logger = logging.getLogger(__name__)
 
         nltk.download("averaged_perceptron_tagger")
-        self.lenguage = language
+        self.language = language
         self.stop_words = set(stopwords.words(self.language))
         self.stemmer = SnowballStemmer(self.language)
 
@@ -104,9 +110,7 @@ class TextProcessing:
                 "_source.sub_product": "sub_product",
             }
         )
-        df["ticket_classification"] = (
-            df["category"] + " + " + df["sub_product"]
-        )
+        df["ticket_classification"] = df["category"] + " + " + df["sub_product"]
         df = df.drop(["sub_product", "category"], axis=1)
         df["complaint_what_happened"] = df["complaint_what_happened"].replace(
             "", np.nan
@@ -115,7 +119,6 @@ class TextProcessing:
         df = df.reset_index(drop=True)
         self.logger.info("Data successfully transformed")
         return df
-
 
     def run(self, file_name: str, version: int):
         """Runs the entire text processing pipeline."""
